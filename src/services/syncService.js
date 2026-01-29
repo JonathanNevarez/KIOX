@@ -59,9 +59,18 @@ export const syncService = {
     const counts = db.get(
       "SELECT (SELECT COUNT(*) FROM categories) as categories, (SELECT COUNT(*) FROM products) as products, (SELECT COUNT(*) FROM sales) as sales;"
     );
-    if ((counts?.categories || 0) > 0 || (counts?.products || 0) > 0 || (counts?.sales || 0) > 0) {
+    if (
+      (counts?.categories || 0) > 0 ||
+      (counts?.products || 0) > 0 ||
+      (counts?.sales || 0) > 0
+    ) {
       return;
     }
+    await this.pullAll();
+  },
+  async pullAll() {
+    if (!this.isOnline()) return;
+    const db = getDb();
     const headers = { "Content-Type": "application/json" };
     const syncKey = settingsService.getSyncKey();
     if (syncKey) headers["x-api-key"] = syncKey;
@@ -73,12 +82,12 @@ export const syncService = {
       }
       const data = await res.json();
       await withTransaction(async () => {
-        insertMany(db, "categories", data.categories || [], [
+        upsertMany(db, "categories", data.categories || [], [
           "id",
           "name",
           "createdAt"
         ]);
-        insertMany(db, "products", data.products || [], [
+        upsertMany(db, "products", data.products || [], [
           "id",
           "name",
           "categoryId",
@@ -89,7 +98,7 @@ export const syncService = {
           "createdAt",
           "updatedAt"
         ]);
-        insertMany(db, "sales", data.sales || [], [
+        upsertMany(db, "sales", data.sales || [], [
           "id",
           "createdAt",
           "customerName",
@@ -100,7 +109,7 @@ export const syncService = {
           "paid",
           "notes"
         ]);
-        insertMany(db, "sale_items", data.sale_items || [], [
+        upsertMany(db, "sale_items", data.sale_items || [], [
           "id",
           "saleId",
           "productId",
@@ -108,7 +117,7 @@ export const syncService = {
           "price",
           "total"
         ]);
-        insertMany(db, "stock_movements", data.stock_movements || [], [
+        upsertMany(db, "stock_movements", data.stock_movements || [], [
           "id",
           "productId",
           "type",
@@ -116,7 +125,7 @@ export const syncService = {
           "reason",
           "createdAt"
         ]);
-        insertMany(db, "debts", data.debts || [], [
+        upsertMany(db, "debts", data.debts || [], [
           "id",
           "saleId",
           "customerName",
@@ -132,14 +141,18 @@ export const syncService = {
   start() {
     this.bootstrapIfEmpty();
     this.sendPending();
-    setInterval(() => this.sendPending(), 30000);
+    this.pullAll();
+    setInterval(() => {
+      this.sendPending();
+      this.pullAll();
+    }, 30000);
   }
 };
 
-function insertMany(db, table, rows, columns) {
+function upsertMany(db, table, rows, columns) {
   if (!rows?.length) return;
   const placeholders = columns.map(() => "?").join(", ");
-  const sql = `INSERT INTO ${table} (${columns.join(",")}) VALUES (${placeholders});`;
+  const sql = `INSERT OR REPLACE INTO ${table} (${columns.join(",")}) VALUES (${placeholders});`;
   rows.forEach((row) => {
     const values = columns.map((col) => row[col] ?? null);
     db.exec(sql, values);
