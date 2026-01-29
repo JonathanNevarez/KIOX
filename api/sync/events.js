@@ -263,8 +263,8 @@ export default async function handler(req, res) {
         const event = { ...raw, ...payload };
         const result = await pool.query(
           `INSERT INTO outbox_events
-            (event_id, event_type, payload, status, attempts, "createdAt", "lastError")
-           VALUES ($1, $2, $3, $4, $5, $6, $7)
+            (event_id, event_type, payload, status, attempts, "createdAt", "lastError", device_id)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
            ON CONFLICT (event_id) DO NOTHING;`,
           [
             raw.event_id,
@@ -273,7 +273,8 @@ export default async function handler(req, res) {
             "RECEIVED",
             0,
             raw.createdAt || new Date().toISOString(),
-            null
+            null,
+            deviceId
           ]
         );
         if (result.rowCount === 0) {

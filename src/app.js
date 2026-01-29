@@ -30,7 +30,7 @@ export async function initApp() {
     toast.success("Con conexión");
     syncService.sendPending();
     syncService.bootstrapIfEmpty();
-    syncService.pullAll();
+    syncService.pullChanges();
   });
   window.addEventListener("offline", () => {
     store.setState({ connectivity: "offline" });

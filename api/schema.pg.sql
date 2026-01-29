@@ -67,8 +67,12 @@ CREATE TABLE IF NOT EXISTS outbox_events (
   status TEXT NOT NULL,
   attempts INTEGER NOT NULL DEFAULT 0,
   "createdAt" TEXT NOT NULL,
-  "lastError" TEXT
+  "lastError" TEXT,
+  device_id TEXT
 );
+
+ALTER TABLE outbox_events
+  ADD COLUMN IF NOT EXISTS device_id TEXT;
 
 CREATE INDEX IF NOT EXISTS idx_products_category ON products("categoryId");
 CREATE INDEX IF NOT EXISTS idx_sales_created ON sales("createdAt");

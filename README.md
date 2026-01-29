@@ -67,13 +67,16 @@ Nota: el cambio a PK hash recrea las tablas locales (se pierde data previa en SQ
 Las operaciones críticas generan eventos en `outbox_events` con estado PENDING.  
 Contrato en `api/contract.md` y endpoint placeholder en `api/sync/events.js`.
 
-## Sync bidireccional (MVP)
+## Sync bidireccional incremental
 La app envia eventos pendientes a `/api/sync/events` cuando hay conexion.  
 El servidor aplica los eventos a las tablas reales y guarda el historial en `outbox_events`.
 
 Bootstrap inicial:
-- `/api/sync/bootstrap` entrega las tablas base.
-- La app descarga datos si el dispositivo esta vacio.
+- `/api/sync/bootstrap` entrega las tablas base si el dispositivo esta vacio.
+
+Incremental:
+- `/api/sync/changes?since=...&deviceId=...` retorna eventos nuevos.
+- La app aplica esos eventos localmente y actualiza `lastSyncAt`.
 
 Si tienes `SYNC_API_KEY` en Vercel, debes guardar la misma clave en Settings > Sync key.
 

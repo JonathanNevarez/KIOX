@@ -41,5 +41,11 @@ export const settingsService = {
   },
   setSyncKey(value) {
     getRepo().set("syncKey", value);
+  },
+  getLastSyncAt() {
+    return getRepo().get("lastSyncAt") || "";
+  },
+  setLastSyncAt(value) {
+    getRepo().set("lastSyncAt", value);
   }
 };

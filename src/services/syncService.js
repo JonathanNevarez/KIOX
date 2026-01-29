@@ -138,13 +138,50 @@ export const syncService = {
       logger.warn("Bootstrap error", err);
     }
   },
+  async pullChanges() {
+    if (!this.isOnline()) return;
+    const db = getDb();
+    const headers = { "Content-Type": "application/json" };
+    const syncKey = settingsService.getSyncKey();
+    if (syncKey) headers["x-api-key"] = syncKey;
+    const since = settingsService.getLastSyncAt() || "1970-01-01T00:00:00.000Z";
+    const deviceId = settingsService.getDeviceId();
+    try {
+      const url = `/api/sync/changes?since=${encodeURIComponent(
+        since
+      )}&deviceId=${encodeURIComponent(deviceId)}`;
+      const res = await fetch(url, { headers });
+      if (!res.ok) {
+        logger.warn("Changes failed", res.status);
+        return;
+      }
+      const data = await res.json();
+      const events = data.events || [];
+      if (!events.length) {
+        if (data.serverTime) settingsService.setLastSyncAt(data.serverTime);
+        return;
+      }
+      await withTransaction(async () => {
+        for (const ev of events) {
+          const payload =
+            typeof ev.payload === "string" ? JSON.parse(ev.payload) : ev.payload;
+          await applyEventLocal(db, { ...payload, event_type: ev.event_type });
+        }
+      });
+      const lastCreatedAt = events[events.length - 1].createdAt;
+      settingsService.setLastSyncAt(lastCreatedAt || data.serverTime || since);
+    } catch (err) {
+      logger.warn("Changes error", err);
+    }
+  },
   start() {
     this.bootstrapIfEmpty();
     this.sendPending();
     this.pullAll();
+    this.pullChanges();
     setInterval(() => {
       this.sendPending();
-      this.pullAll();
+      this.pullChanges();
     }, 30000);
   }
 };
@@ -157,4 +194,163 @@ function upsertMany(db, table, rows, columns) {
     const values = columns.map((col) => row[col] ?? null);
     db.exec(sql, values);
   });
+}
+
+async function applyEventLocal(db, ev) {
+  switch (ev.event_type) {
+    case "category.created":
+      db.exec(
+        `INSERT OR REPLACE INTO categories (id, name, createdAt) VALUES (?, ?, ?);`,
+        [ev.id, ev.name, ev.createdAt || new Date().toISOString()]
+      );
+      return;
+    case "category.updated":
+      db.exec(`UPDATE categories SET name = ? WHERE id = ?;`, [ev.name, ev.id]);
+      return;
+    case "category.deleted":
+      db.exec(`DELETE FROM categories WHERE id = ?;`, [ev.id]);
+      return;
+    case "product.created":
+    case "product.updated":
+      db.exec(
+        `INSERT OR REPLACE INTO products
+          (id, name, categoryId, priceSell, stock, barcode, imageUrl, createdAt, updatedAt)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+        [
+          ev.id,
+          ev.name,
+          ev.categoryId,
+          ev.priceSell,
+          ev.stock || 0,
+          ev.barcode || null,
+          ev.imageUrl || null,
+          ev.createdAt || ev.updatedAt || new Date().toISOString(),
+          ev.updatedAt || new Date().toISOString()
+        ]
+      );
+      return;
+    case "product.deleted":
+      db.exec(`DELETE FROM products WHERE id = ?;`, [ev.id]);
+      return;
+    case "sale.created": {
+      const exists = db.get("SELECT id FROM sales WHERE id = ?;", [ev.saleId]);
+      if (exists) return;
+      const payment = ev.payment || {};
+      const totals = ev.totals || {};
+      db.exec(
+        `INSERT INTO sales
+          (id, createdAt, customerName, customerPhone, paymentMethod, subtotal, total, paid, notes)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+        [
+          ev.saleId,
+          ev.saleCreatedAt || new Date().toISOString(),
+          payment.customerName || null,
+          payment.customerPhone || null,
+          payment.paymentMethod,
+          totals.subtotal || 0,
+          totals.total || 0,
+          totals.paid || 0,
+          payment.notes || null
+        ]
+      );
+      const items = ev.items || [];
+      items.forEach((item) => {
+        db.exec(
+          `INSERT OR IGNORE INTO sale_items
+            (id, saleId, productId, qty, price, total)
+           VALUES (?, ?, ?, ?, ?, ?);`,
+          [
+            item.id,
+            ev.saleId,
+            item.productId,
+            item.qty,
+            item.price,
+            item.total
+          ]
+        );
+        db.exec(`UPDATE products SET stock = stock - ? WHERE id = ?;`, [
+          item.qty,
+          item.productId
+        ]);
+        const movementId = `${ev.saleId}:${item.productId}:${item.id}`;
+        db.exec(
+          `INSERT OR IGNORE INTO stock_movements
+            (id, productId, type, qty, reason, createdAt)
+           VALUES (?, ?, ?, ?, ?, ?);`,
+          [
+            movementId,
+            item.productId,
+            "out",
+            item.qty,
+            "sale",
+            item.createdAt || new Date().toISOString()
+          ]
+        );
+      });
+      if (ev.balance > 0 && ev.debtId) {
+        db.exec(
+          `INSERT OR IGNORE INTO debts
+            (id, saleId, customerName, customerPhone, amount, createdAt)
+           VALUES (?, ?, ?, ?, ?, ?);`,
+          [
+            ev.debtId,
+            ev.saleId,
+            payment.customerName || "",
+            payment.customerPhone || null,
+            ev.balance,
+            ev.saleCreatedAt || new Date().toISOString()
+          ]
+        );
+      }
+      return;
+    }
+    case "debt.payment": {
+      const row = db.get("SELECT amount FROM debts WHERE id = ?;", [ev.debtId]);
+      if (!row) return;
+      const current = Number(row.amount || 0);
+      const next = Math.max(current - Number(ev.amount || 0), 0);
+      if (next === 0) {
+        db.exec("DELETE FROM debts WHERE id = ?;", [ev.debtId]);
+      } else {
+        db.exec("UPDATE debts SET amount = ? WHERE id = ?;", [
+          next,
+          ev.debtId
+        ]);
+      }
+      db.exec("UPDATE sales SET paid = paid + ? WHERE id = ?;", [
+        ev.amount || 0,
+        ev.saleId
+      ]);
+      return;
+    }
+    case "stock.moved": {
+      db.exec(
+        `INSERT OR IGNORE INTO stock_movements
+          (id, productId, type, qty, reason, createdAt)
+         VALUES (?, ?, ?, ?, ?, ?);`,
+        [ev.id, ev.productId, ev.type, ev.qty, ev.reason, ev.createdAt]
+      );
+      if (ev.type === "in") {
+        db.exec("UPDATE products SET stock = stock + ? WHERE id = ?;", [
+          ev.qty,
+          ev.productId
+        ]);
+      }
+      if (ev.type === "out") {
+        db.exec("UPDATE products SET stock = stock - ? WHERE id = ?;", [
+          ev.qty,
+          ev.productId
+        ]);
+      }
+      if (ev.type === "adjust") {
+        db.exec("UPDATE products SET stock = ? WHERE id = ?;", [
+          ev.qty,
+          ev.productId
+        ]);
+      }
+      return;
+    }
+    default:
+      return;
+  }
 }
