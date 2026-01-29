@@ -16,6 +16,11 @@ npm install
 npm run dev
 ```
 
+## Sync en desarrollo
+Los endpoints `/api/*` existen solo en Vercel. En local puedes:
+1) Desactivar sync (por defecto), o
+2) Definir `VITE_SYNC_BASE=https://kiox-six.vercel.app` en `.env.local` para apuntar a producción.
+
 ## Build de producción
 ```
 npm run build

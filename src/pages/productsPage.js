@@ -6,6 +6,7 @@ import { el, clear } from "../utils/dom.js";
 import { showModal } from "../ui/components/modal.js";
 import { toast } from "../ui/components/toast.js";
 import { settingsService } from "../services/settingsService.js";
+import { createIcons, icons } from "lucide";
 
 export function productsPage() {
   const categoryRepo = new CategoryRepo();
@@ -53,7 +54,7 @@ export function productsPage() {
       el("thead", {}, [
         el("tr", {}, [
           el("th", {}, "Nombre"),
-          el("th", {}, "Categoría"),
+          el("th", { class: "col-hide-sm" }, "Categoría"),
           el("th", {}, "Precio"),
           el("th", {}, "Stock"),
           el("th", {}, "Acciones")
@@ -65,20 +66,34 @@ export function productsPage() {
       {},
       products.map((p) =>
         el("tr", {}, [
-          el("td", {}, p.name),
-          el("td", {}, p.categoryName),
-          el("td", {}, formatMoney(p.priceSell, settingsService.getCurrency())),
-          el("td", {}, p.stock),
-          el("td", {}, [
+          el("td", { "data-label": "Nombre" }, p.name),
+          el("td", { "data-label": "Categoría", class: "col-hide-sm" }, p.categoryName),
+          el(
+            "td",
+            { "data-label": "Precio" },
+            formatMoney(p.priceSell, settingsService.getCurrency())
+          ),
+          el("td", { "data-label": "Stock" }, p.stock),
+          el("td", { "data-label": "Acciones", class: "actions" }, [
             el(
               "button",
-              { class: "btn ghost", onClick: () => openForm(p) },
-              "Editar"
+              {
+                class: "btn ghost icon-btn info",
+                onClick: () => openForm(p),
+                title: "Editar",
+                "aria-label": "Editar"
+              },
+              el("i", { "data-lucide": "pencil" })
             ),
             el(
               "button",
-              { class: "btn ghost", onClick: () => openDelete(p) },
-              "Eliminar"
+              {
+                class: "btn ghost icon-btn danger",
+                onClick: () => openDelete(p),
+                title: "Eliminar",
+                "aria-label": "Eliminar"
+              },
+              el("i", { "data-lucide": "trash-2" })
             )
           ])
         ])
@@ -86,6 +101,7 @@ export function productsPage() {
     );
     table.appendChild(tbody);
     tableWrap.appendChild(table);
+    createIcons({ icons });
   }
 
   function openForm(product) {

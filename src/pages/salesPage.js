@@ -4,6 +4,7 @@ import { formatDateTime, formatMoney } from "../utils/format.js";
 import { el, clear } from "../utils/dom.js";
 import { showModal } from "../ui/components/modal.js";
 import { settingsService } from "../services/settingsService.js";
+import { createIcons, icons } from "lucide";
 
 export function salesPage() {
   const saleRepo = new SaleRepo();
@@ -21,11 +22,11 @@ export function salesPage() {
     const table = el("table", { class: "table" }, [
       el("thead", {}, [
         el("tr", {}, [
-          el("th", {}, "ID"),
+          el("th", { class: "col-hide-sm" }, "ID"),
           el("th", {}, "Fecha"),
           el("th", {}, "Cliente"),
           el("th", {}, "Total"),
-          el("th", {}, "Pagado"),
+          el("th", { class: "col-hide-sm" }, "Pagado"),
           el("th", {}, "Saldo"),
           el("th", {}, "Estado"),
           el("th", {}, "Detalle")
@@ -38,27 +39,43 @@ export function salesPage() {
       sales.map((sale) => {
         const balance = Math.max(sale.total - sale.paid, 0);
         return el("tr", {}, [
-          el("td", {}, sale.id),
-          el("td", {}, formatDateTime(sale.createdAt)),
-          el("td", {}, sale.customerName || "Mostrador"),
-          el("td", {}, formatMoney(sale.total, settingsService.getCurrency())),
-          el("td", {}, formatMoney(sale.paid, settingsService.getCurrency())),
-          el("td", {}, formatMoney(balance, settingsService.getCurrency())),
-          el("td", {}, statusBadge(sale.status)),
+          el("td", { "data-label": "ID", class: "col-hide-sm" }, sale.id),
+          el("td", { "data-label": "Fecha" }, formatDateTime(sale.createdAt)),
+          el("td", { "data-label": "Cliente" }, sale.customerName || "Mostrador"),
           el(
             "td",
-            {},
+            { "data-label": "Total" },
+            formatMoney(sale.total, settingsService.getCurrency())
+          ),
+          el(
+            "td",
+            { "data-label": "Pagado", class: "col-hide-sm" },
+            formatMoney(sale.paid, settingsService.getCurrency())
+          ),
+          el(
+            "td",
+            { "data-label": "Saldo" },
+            formatMoney(balance, settingsService.getCurrency())
+          ),
+          el("td", { "data-label": "Estado" }, statusBadge(sale.status)),
+          el("td", { "data-label": "Detalle", class: "actions" }, [
             el(
               "button",
-              { class: "btn ghost", onClick: () => openDetail(sale) },
-              "Ver"
+              {
+                class: "btn ghost icon-btn info",
+                onClick: () => openDetail(sale),
+                title: "Ver detalle",
+                "aria-label": "Ver detalle"
+              },
+              el("i", { "data-lucide": "eye" })
             )
-          )
+          ])
         ]);
       })
     );
     table.appendChild(tbody);
     wrapper.appendChild(table);
+    createIcons({ icons });
   }
 
   function statusBadge(status) {

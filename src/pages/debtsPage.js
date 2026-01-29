@@ -5,6 +5,7 @@ import { el, clear } from "../utils/dom.js";
 import { showModal } from "../ui/components/modal.js";
 import { toast } from "../ui/components/toast.js";
 import { settingsService } from "../services/settingsService.js";
+import { createIcons, icons } from "lucide";
 
 export function debtsPage() {
   const repo = new DebtRepo();
@@ -21,7 +22,7 @@ export function debtsPage() {
       el("thead", {}, [
         el("tr", {}, [
           el("th", {}, "Cliente"),
-          el("th", {}, "Teléfono"),
+          el("th", { class: "col-hide-sm" }, "Teléfono"),
           el("th", {}, "Venta"),
           el("th", {}, "Monto"),
           el("th", {}, "Fecha"),
@@ -34,25 +35,33 @@ export function debtsPage() {
       {},
       debts.map((debt) =>
         el("tr", {}, [
-          el("td", {}, debt.customerName),
-          el("td", {}, debt.customerPhone || "-"),
-          el("td", {}, `#${debt.saleId}`),
-          el("td", {}, formatMoney(debt.amount, settingsService.getCurrency())),
-          el("td", {}, formatDateTime(debt.createdAt)),
+          el("td", { "data-label": "Cliente" }, debt.customerName),
+          el("td", { "data-label": "Teléfono", class: "col-hide-sm" }, debt.customerPhone || "-"),
+          el("td", { "data-label": "Venta" }, `#${debt.saleId}`),
           el(
             "td",
-            {},
+            { "data-label": "Monto" },
+            formatMoney(debt.amount, settingsService.getCurrency())
+          ),
+          el("td", { "data-label": "Fecha" }, formatDateTime(debt.createdAt)),
+          el("td", { "data-label": "Acción", class: "actions" }, [
             el(
               "button",
-              { class: "btn ghost", onClick: () => openPayment(debt) },
-              "Registrar pago"
+              {
+                class: "btn ghost icon-btn info",
+                onClick: () => openPayment(debt),
+                title: "Registrar pago",
+                "aria-label": "Registrar pago"
+              },
+              el("i", { "data-lucide": "wallet" })
             )
-          )
+          ])
         ])
       )
     );
     table.appendChild(tbody);
     wrapper.appendChild(table);
+    createIcons({ icons });
   }
 
   function openPayment(debt) {

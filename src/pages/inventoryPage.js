@@ -40,9 +40,9 @@ export function inventoryPage() {
       {},
       products.map((p) =>
         el("tr", {}, [
-          el("td", {}, p.name),
-          el("td", {}, p.stock),
-          el("td", {}, statusBadge(p))
+          el("td", { "data-label": "Producto" }, p.name),
+          el("td", { "data-label": "Stock" }, p.stock),
+          el("td", { "data-label": "Estado" }, statusBadge(p))
         ])
       )
     );

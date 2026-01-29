@@ -3,6 +3,7 @@ import { validateCategory } from "../services/validation.js";
 import { el, clear } from "../utils/dom.js";
 import { showModal } from "../ui/components/modal.js";
 import { toast } from "../ui/components/toast.js";
+import { createIcons, icons } from "lucide";
 
 export function categoriesPage() {
   const repo = new CategoryRepo();
@@ -39,20 +40,27 @@ export function categoriesPage() {
       {},
       categories.map((cat) =>
         el("tr", {}, [
-          el("td", {}, cat.name),
-          el("td", {}, [
+          el("td", { "data-label": "Nombre" }, cat.name),
+          el("td", { "data-label": "Acciones", class: "actions" }, [
             el(
               "button",
-              { class: "btn ghost", onClick: () => openForm(cat) },
-              "Editar"
+              {
+                class: "btn ghost icon-btn info",
+                onClick: () => openForm(cat),
+                title: "Editar",
+                "aria-label": "Editar"
+              },
+              el("i", { "data-lucide": "pencil" })
             ),
             el(
               "button",
               {
-                class: "btn ghost",
-                onClick: () => openDelete(cat)
+                class: "btn ghost icon-btn danger",
+                onClick: () => openDelete(cat),
+                title: "Eliminar",
+                "aria-label": "Eliminar"
               },
-              "Eliminar"
+              el("i", { "data-lucide": "trash-2" })
             )
           ])
         ])
@@ -60,6 +68,7 @@ export function categoriesPage() {
     );
     table.appendChild(tbody);
     card.appendChild(table);
+    createIcons({ icons });
   }
 
   function openForm(category) {

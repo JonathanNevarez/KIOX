@@ -15,7 +15,7 @@ export function homePage() {
   ]);
 
   const lowStock = el("div", { class: "card" }, [
-    el("h3", {}, "Productos con stock bajo (<= 5)"),
+    el("h3", {}, "Productos con stock bajo"),
     data.lowStock.length
       ? createTable(data.lowStock)
       : el("div", { class: "empty" }, "Sin productos con stock bajo")
@@ -39,7 +39,8 @@ function createTable(rows) {
     el("thead", {}, [
       el("tr", {}, [
         el("th", {}, "Producto"),
-        el("th", {}, "Stock")
+        el("th", {}, "Stock"),
+        el("th", {}, "Estado")
       ])
     ])
   );
@@ -49,10 +50,16 @@ function createTable(rows) {
     rows.map((row) =>
       el("tr", {}, [
         el("td", {}, row.name),
-        el("td", {}, row.stock)
+        el("td", {}, row.stock),
+        el("td", {}, statusBadge(row.stock))
       ])
     )
   );
   table.appendChild(tbody);
   return table;
+}
+
+function statusBadge(stock) {
+  if (stock <= 0) return el("span", { class: "badge danger" }, "Sin stock");
+  return el("span", { class: "badge warning" }, "Bajo");
 }

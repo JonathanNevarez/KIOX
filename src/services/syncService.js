@@ -3,6 +3,13 @@ import { settingsService } from "./settingsService.js";
 import { logger } from "../utils/logger.js";
 import { getDb, withTransaction } from "../db/sqlite/index.js";
 
+function getApiBase() {
+  if (import.meta.env.DEV) {
+    return import.meta.env.VITE_SYNC_BASE || "";
+  }
+  return "";
+}
+
 export const syncService = {
   getPendingEvents(limit = 50) {
     const repo = new OutboxRepo();
@@ -24,6 +31,11 @@ export const syncService = {
   },
   async sendPending() {
     if (!this.isOnline()) return;
+    const base = getApiBase();
+    if (import.meta.env.DEV && !base) {
+      logger.warn("Sync disabled in dev (VITE_SYNC_BASE not set)");
+      return;
+    }
     const repo = new OutboxRepo();
     const events = repo.listPending(50);
     if (!events.length) return;
@@ -34,13 +46,18 @@ export const syncService = {
     const syncKey = settingsService.getSyncKey();
     if (syncKey) headers["x-api-key"] = syncKey;
     try {
-      const res = await fetch("/api/sync/events", {
+      const res = await fetch(`${base}/api/sync/events`, {
         method: "POST",
         headers,
         body: JSON.stringify(payload)
       });
       if (!res.ok) {
         logger.warn("Sync failed", res.status);
+        return;
+      }
+      const contentType = res.headers.get("content-type") || "";
+      if (!contentType.includes("application/json")) {
+        logger.warn("Sync response not JSON");
         return;
       }
       const result = await res.json();
@@ -70,14 +87,24 @@ export const syncService = {
   },
   async pullAll() {
     if (!this.isOnline()) return;
+    const base = getApiBase();
+    if (import.meta.env.DEV && !base) {
+      logger.warn("Pull disabled in dev (VITE_SYNC_BASE not set)");
+      return;
+    }
     const db = getDb();
     const headers = { "Content-Type": "application/json" };
     const syncKey = settingsService.getSyncKey();
     if (syncKey) headers["x-api-key"] = syncKey;
     try {
-      const res = await fetch("/api/sync/bootstrap", { headers });
+      const res = await fetch(`${base}/api/sync/bootstrap`, { headers });
       if (!res.ok) {
         logger.warn("Bootstrap failed", res.status);
+        return;
+      }
+      const contentType = res.headers.get("content-type") || "";
+      if (!contentType.includes("application/json")) {
+        logger.warn("Bootstrap response not JSON");
         return;
       }
       const data = await res.json();
@@ -140,6 +167,11 @@ export const syncService = {
   },
   async pullChanges() {
     if (!this.isOnline()) return;
+    const base = getApiBase();
+    if (import.meta.env.DEV && !base) {
+      logger.warn("Changes disabled in dev (VITE_SYNC_BASE not set)");
+      return;
+    }
     const db = getDb();
     const headers = { "Content-Type": "application/json" };
     const syncKey = settingsService.getSyncKey();
@@ -147,12 +179,17 @@ export const syncService = {
     const since = settingsService.getLastSyncAt() || "1970-01-01T00:00:00.000Z";
     const deviceId = settingsService.getDeviceId();
     try {
-      const url = `/api/sync/changes?since=${encodeURIComponent(
+      const url = `${base}/api/sync/changes?since=${encodeURIComponent(
         since
       )}&deviceId=${encodeURIComponent(deviceId)}`;
       const res = await fetch(url, { headers });
       if (!res.ok) {
         logger.warn("Changes failed", res.status);
+        return;
+      }
+      const contentType = res.headers.get("content-type") || "";
+      if (!contentType.includes("application/json")) {
+        logger.warn("Changes response not JSON");
         return;
       }
       const data = await res.json();
