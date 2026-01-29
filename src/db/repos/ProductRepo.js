@@ -1,6 +1,7 @@
 import { getDb } from "../sqlite/index.js";
 import { nowIso } from "../../utils/time.js";
 import { hashId } from "../../utils/hash.js";
+import { OutboxRepo } from "./OutboxRepo.js";
 
 const LOW_STOCK_THRESHOLD = 5;
 
@@ -60,6 +61,24 @@ export class ProductRepo {
         updatedAt
       ]
     );
+    const outbox = new OutboxRepo();
+    outbox.create({
+      event_id: hashId(["outbox", "product.created", id, createdAt]),
+      event_type: "product.created",
+      payload: JSON.stringify({
+        id,
+        name: data.name,
+        categoryId: data.categoryId,
+        priceSell: data.priceSell,
+        stock: data.stock || 0,
+        barcode: data.barcode || null,
+        imageUrl: data.imageUrl || null,
+        createdAt,
+        updatedAt
+      }),
+      status: "PENDING",
+      createdAt
+    });
     this.db.persist();
     return this.getById(id);
   }
@@ -87,6 +106,23 @@ export class ProductRepo {
         id
       ]
     );
+    const outbox = new OutboxRepo();
+    outbox.create({
+      event_id: hashId(["outbox", "product.updated", id, updatedAt]),
+      event_type: "product.updated",
+      payload: JSON.stringify({
+        id,
+        name: data.name,
+        categoryId: data.categoryId,
+        priceSell: data.priceSell,
+        stock: data.stock || 0,
+        barcode: data.barcode || null,
+        imageUrl: data.imageUrl || null,
+        updatedAt
+      }),
+      status: "PENDING",
+      createdAt: updatedAt
+    });
     this.db.persist();
     return this.getById(id);
   }
@@ -101,6 +137,15 @@ export class ProductRepo {
 
   remove(id) {
     this.db.exec("DELETE FROM products WHERE id = ?;", [id]);
+    const removedAt = nowIso();
+    const outbox = new OutboxRepo();
+    outbox.create({
+      event_id: hashId(["outbox", "product.deleted", id, removedAt]),
+      event_type: "product.deleted",
+      payload: JSON.stringify({ id, deletedAt: removedAt }),
+      status: "PENDING",
+      createdAt: removedAt
+    });
     this.db.persist();
   }
 }

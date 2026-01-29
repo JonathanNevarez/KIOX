@@ -34,7 +34,14 @@ export const inventoryService = {
       outboxRepo.create({
         event_id: hashId(["outbox", "stock.moved", productId, eventCreatedAt]),
         event_type: "stock.moved",
-        payload: JSON.stringify({ productId, type, qty, reason }),
+        payload: JSON.stringify({
+          id: hashId(["stock_move", productId, moveCreatedAt]),
+          productId,
+          type,
+          qty,
+          reason,
+          createdAt: moveCreatedAt
+        }),
         status: "PENDING",
         createdAt: eventCreatedAt
       });

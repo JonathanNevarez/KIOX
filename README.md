@@ -67,6 +67,16 @@ Nota: el cambio a PK hash recrea las tablas locales (se pierde data previa en SQ
 Las operaciones críticas generan eventos en `outbox_events` con estado PENDING.  
 Contrato en `api/contract.md` y endpoint placeholder en `api/sync/events.js`.
 
+## Sync bidireccional (MVP)
+La app envia eventos pendientes a `/api/sync/events` cuando hay conexion.  
+El servidor aplica los eventos a las tablas reales y guarda el historial en `outbox_events`.
+
+Bootstrap inicial:
+- `/api/sync/bootstrap` entrega las tablas base.
+- La app descarga datos si el dispositivo esta vacio.
+
+Si tienes `SYNC_API_KEY` en Vercel, debes guardar la misma clave en Settings > Sync key.
+
 ## Migraciones Postgres (endpoint protegido)
 Si quieres crear las tablas en tu Postgres remoto desde la API:
 1. Configura `DATABASE_URL` en Vercel.

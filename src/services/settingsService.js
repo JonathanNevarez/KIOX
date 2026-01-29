@@ -35,5 +35,11 @@ export const settingsService = {
   },
   setTheme(value) {
     getRepo().set("theme", value);
+  },
+  getSyncKey() {
+    return getRepo().get("syncKey") || "";
+  },
+  setSyncKey(value) {
+    getRepo().set("syncKey", value);
   }
 };

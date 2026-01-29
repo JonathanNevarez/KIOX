@@ -46,6 +46,8 @@ export const saleService = {
 
     const saleCreatedAt = nowIso();
     const saleId = hashId(["sale", payment.customerName || "cash", saleCreatedAt]);
+    const eventItems = [];
+    let debtId = null;
     const saleIdFinal = await withTransaction(async () => {
       const saleIdInner = saleRepo.create({
         id: saleId,
@@ -70,6 +72,15 @@ export const saleService = {
           price: item.price,
           total: item.price * item.qty
         });
+        eventItems.push({
+          id: itemId,
+          productId: item.productId,
+          name: item.name,
+          qty: item.qty,
+          price: item.price,
+          total: item.price * item.qty,
+          createdAt: itemCreatedAt
+        });
 
         const product = productRepo.getById(item.productId);
         productRepo.updateStock(item.productId, product.stock - item.qty);
@@ -86,8 +97,9 @@ export const saleService = {
 
       if (balance > 0) {
         const debtCreatedAt = nowIso();
+        debtId = hashId(["debt", saleIdInner, debtCreatedAt]);
         debtRepo.create({
-          id: hashId(["debt", saleIdInner, debtCreatedAt]),
+          id: debtId,
           saleId: saleIdInner,
           customerName: payment.customerName,
           customerPhone: payment.customerPhone || null,
@@ -102,9 +114,12 @@ export const saleService = {
         event_type: "sale.created",
         payload: JSON.stringify({
           saleId: saleIdInner,
-          items,
+          saleCreatedAt,
+          items: eventItems,
           payment,
-          totals: { subtotal, total, paid }
+          totals: { subtotal, total, paid },
+          balance,
+          debtId
         }),
         status: "PENDING",
         createdAt: eventCreatedAt

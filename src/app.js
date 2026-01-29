@@ -6,6 +6,7 @@ import { createLayout } from "./ui/layout.js";
 import { startRouter } from "./router.js";
 import { settingsService } from "./services/settingsService.js";
 import { toast } from "./ui/components/toast.js";
+import { syncService } from "./services/syncService.js";
 
 export async function initApp() {
   const db = await initDb();
@@ -22,10 +23,13 @@ export async function initApp() {
   root.appendChild(createLayout());
 
   startRouter();
+  syncService.start();
 
   window.addEventListener("online", () => {
     store.setState({ connectivity: "online" });
     toast.success("Con conexión");
+    syncService.sendPending();
+    syncService.bootstrapIfEmpty();
   });
   window.addEventListener("offline", () => {
     store.setState({ connectivity: "offline" });
