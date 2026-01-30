@@ -377,6 +377,17 @@ a {
   color: var(--text);
 }
 
+/* Ensure action icon variants override ghost button color */
+.btn.ghost.icon-btn.danger {
+  color: #dc2626;
+  border-color: rgba(220, 38, 38, 0.35);
+}
+
+.btn.ghost.icon-btn.info {
+  color: #2563eb;
+  border-color: rgba(37, 99, 235, 0.35);
+}
+
 .table-scroll {
   max-width: 100%;
   overflow-x: auto;

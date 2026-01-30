@@ -41,7 +41,7 @@ export function salesPage() {
         return el("tr", {}, [
           el("td", { "data-label": "ID", class: "col-hide-sm" }, sale.id),
           el("td", { "data-label": "Fecha" }, formatDateTime(sale.createdAt)),
-          el("td", { "data-label": "Cliente" }, sale.customerName || "Mostrador"),
+          el("td", { "data-label": "Cliente" }, sale.customerName || "C. Final"),
           el(
             "td",
             { "data-label": "Total" },
@@ -93,7 +93,7 @@ export function salesPage() {
     const items = itemRepo.listBySaleId(sale.id);
     const content = el("div", { class: "form" }, [
       el("div", {}, `Método: ${sale.paymentMethod}`),
-      el("div", {}, `Cliente: ${sale.customerName || "Mostrador"}`),
+      el("div", {}, `Cliente: ${sale.customerName || "C. Final"}`),
       el("div", {}, `Notas: ${sale.notes || "-"}`),
       el("div", {}, "Items:")
     ]);
