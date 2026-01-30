@@ -67,7 +67,8 @@ export function categoriesPage() {
       )
     );
     table.appendChild(tbody);
-    card.appendChild(table);
+    const scroll = el("div", { class: "table-scroll" }, table);
+    card.appendChild(scroll);
     createIcons({ icons });
   }
 

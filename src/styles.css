@@ -138,6 +138,7 @@ a {
   max-width: 1280px;
   margin: 0 auto;
   width: 100%;
+  overflow-x: hidden;
 }
 
 .header {
@@ -172,6 +173,7 @@ a {
   padding: 18px;
   box-shadow: var(--shadow);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  overflow: hidden;
 }
 
 .card:hover {
@@ -220,7 +222,7 @@ a {
 .table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 560px;
+  min-width: 640px;
   table-layout: fixed;
 }
 
@@ -242,7 +244,7 @@ a {
 
 .table th,
 .table td {
-  padding: 12px 10px;
+  padding: 14px 12px;
   border-bottom: 1px solid var(--border);
   text-align: left;
   font-size: 14px;
@@ -252,6 +254,7 @@ a {
 .table th {
   color: var(--muted);
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .actions {
@@ -264,6 +267,20 @@ a {
   height: 34px;
   padding: 0;
   justify-content: center;
+}
+
+.icon-btn svg {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  flex-shrink: 0;
+}
+
+.icon-btn svg {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  flex-shrink: 0;
 }
 
 .icon-btn.danger {
@@ -358,6 +375,25 @@ a {
   background: var(--btn-ghost);
   border-color: var(--btn-ghost-border);
   color: var(--text);
+}
+
+.table-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  display: block;
+}
+
+
+.sales-table {
+  min-width: 1000px;
+  table-layout: auto;
+}
+
+.sales-table th,
+.sales-table td {
+  white-space: nowrap;
+  padding: 14px 16px;
 }
 
 .btn.primary:hover {

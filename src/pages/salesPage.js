@@ -19,7 +19,7 @@ export function salesPage() {
       wrapper.appendChild(el("div", { class: "empty" }, "Sin ventas"));
       return;
     }
-    const table = el("table", { class: "table" }, [
+    const table = el("table", { class: "table sales-table" }, [
       el("thead", {}, [
         el("tr", {}, [
           el("th", { class: "col-hide-sm" }, "ID"),
@@ -74,7 +74,8 @@ export function salesPage() {
       })
     );
     table.appendChild(tbody);
-    wrapper.appendChild(table);
+    const scroll = el("div", { class: "table-scroll" }, table);
+    wrapper.appendChild(scroll);
     createIcons({ icons });
   }
 
@@ -117,7 +118,8 @@ export function salesPage() {
       )
     );
     table.appendChild(tbody);
-    content.appendChild(table);
+    const scroll = el("div", { class: "table-scroll" }, table);
+    content.appendChild(scroll);
     content.appendChild(
       el(
         "div",

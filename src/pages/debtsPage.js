@@ -60,7 +60,8 @@ export function debtsPage() {
       )
     );
     table.appendChild(tbody);
-    wrapper.appendChild(table);
+    const scroll = el("div", { class: "table-scroll" }, table);
+    wrapper.appendChild(scroll);
     createIcons({ icons });
   }
 

@@ -100,7 +100,8 @@ export function productsPage() {
       )
     );
     table.appendChild(tbody);
-    tableWrap.appendChild(table);
+    const scroll = el("div", { class: "table-scroll" }, table);
+    tableWrap.appendChild(scroll);
     createIcons({ icons });
   }
 

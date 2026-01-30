@@ -17,7 +17,7 @@ export function homePage() {
   const lowStock = el("div", { class: "card" }, [
     el("h3", {}, "Productos con stock bajo"),
     data.lowStock.length
-      ? createTable(data.lowStock)
+      ? el("div", { class: "table-scroll" }, createTable(data.lowStock))
       : el("div", { class: "empty" }, "Sin productos con stock bajo")
   ]);
 
