@@ -215,6 +215,10 @@ a {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
+.grid-5 {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
 .grid-3 {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
@@ -532,6 +536,22 @@ a {
   padding: 14px;
   display: grid;
   gap: 12px;
+  position: sticky;
+  top: 24px;
+  max-height: calc(100vh - 120px);
+}
+
+.cart-items {
+  display: grid;
+  gap: 12px;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.cart-footer {
+  display: grid;
+  gap: 12px;
+  margin-top: auto;
 }
 
 .cart-item {
@@ -703,6 +723,9 @@ a {
   .grid-4 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+  .grid-5 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
   .pos {
     grid-template-columns: 1fr;
   }
@@ -723,6 +746,11 @@ a {
   }
   .card {
     overflow-x: hidden;
+  }
+
+  .cart {
+    position: static;
+    max-height: none;
   }
 
   .table {

@@ -151,9 +151,12 @@ export function posPage() {
     clear(cartSection);
     const cart = store.getState().cart;
     cartSection.appendChild(el("h3", {}, "Carrito"));
+    const cartItems = el("div", { class: "cart-items" });
+    const cartFooter = el("div", { class: "cart-footer" });
+    cartSection.appendChild(cartItems);
 
     if (!cart.length) {
-      cartSection.appendChild(
+      cartItems.appendChild(
         el("div", { class: "empty" }, "Sin items")
       );
       return;
@@ -220,7 +223,7 @@ export function posPage() {
           )
         ])
       ]);
-      cartSection.appendChild(row);
+      cartItems.appendChild(row);
     });
 
     const totals = cart.reduce(
@@ -232,7 +235,7 @@ export function posPage() {
       { subtotal: 0, total: 0 }
     );
 
-    cartSection.appendChild(
+    cartFooter.appendChild(
       el("div", { class: "totals" }, [
         el("div", { class: "line" }, [
           el("span", {}, "Subtotal"),
@@ -245,7 +248,7 @@ export function posPage() {
       ])
     );
 
-    cartSection.appendChild(
+    cartFooter.appendChild(
       el(
         "button",
         {
@@ -255,6 +258,7 @@ export function posPage() {
         "Cobrar"
       )
     );
+    cartSection.appendChild(cartFooter);
   }
 
   function openCheckoutModal(cart, totals) {

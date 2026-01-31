@@ -22,12 +22,17 @@ export const reportService = {
       "SELECT COUNT(*) as count FROM products;",
       []
     );
+    const totalInventoryValue = db.get(
+      "SELECT COALESCE(SUM(stock * priceSell), 0) as total FROM products;",
+      []
+    );
     const lowStock = new ProductRepo().listLowStock(5);
     return {
       salesToday: salesToday?.count || 0,
       totalPaid: totalPaid?.total || 0,
       totalDebt: totalDebt?.total || 0,
       totalProducts: totalProducts?.count || 0,
+      totalInventoryValue: totalInventoryValue?.total || 0,
       lowStock
     };
   }

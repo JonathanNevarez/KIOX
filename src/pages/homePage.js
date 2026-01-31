@@ -7,11 +7,12 @@ export function homePage() {
   const data = reportService.getDashboardMetrics();
 
   const currency = settingsService.getCurrency();
-  const cards = el("div", { class: "grid grid-4" }, [
+  const cards = el("div", { class: "grid grid-5" }, [
     card("Ventas hoy", data.salesToday),
     card("Cobrado hoy", formatMoney(data.totalPaid, currency)),
     card("Deuda pendiente", formatMoney(data.totalDebt, currency)),
-    card("Total productos", data.totalProducts)
+    card("Total productos", data.totalProducts),
+    card("Dinero en productos", formatMoney(data.totalInventoryValue, currency))
   ]);
 
   const lowStock = el("div", { class: "card" }, [
